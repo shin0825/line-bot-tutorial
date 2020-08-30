@@ -1,0 +1,29 @@
+version: '3.7'
+services:
+  line_bot_web:
+    container_name: line_bot_web
+    build: ./docker/web
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./:/app:cached # (1)
+      - /app/vendor
+      - /app/tmp
+      - /app/log
+      - /app/.git
+    tty: true
+    depends_on:
+      - line_bot_db
+  line_bot_db:
+    container_name: line_bot_db
+    image: postgres:12.2-alpine
+    volumes:
+      - ./docker/db/storage:/var/lib/postgresql/data:cached # (2)
+    ports:
+      - '5432:5432'
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: password
+      POSTGRES_INITDB_ARGS: '--encoding=UTF-8 --locale=ja_JP.UTF-8' # (3)
+      TZ: Asia/Tokyo # (3)
