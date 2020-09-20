@@ -1,6 +1,12 @@
 class LinebotController < ApplicationController
   require 'line/bot'
 
+  THUMBNAIL_URL = 'https://via.placeholder.com/1024x1024'
+  HORIZONTAL_THUMBNAIL_URL = 'https://via.placeholder.com/1024x768'
+  QUICK_REPLY_ICON_URL = 'https://via.placeholder.com/64x64'
+
+  @hoge = false
+
   protect_from_forgery :except => [:callback]
 
   def client
@@ -26,21 +32,88 @@ class LinebotController < ApplicationController
       when Line::Bot::Event::Message
         case event.type
         when Line::Bot::Event::MessageType::Text
+          puts '@hoge'
+          puts @hoge ? 'a!' : 'e?'
           # LINEから送られてきたメッセージが「アンケート」と一致するかチェック
           if sample.include?(event.message['text'])
-            if event['source']['type'] == 'user'
-              profile = client.get_profile(event['source']['userId'])
-              profile = JSON.parse(profile.read_body)
-              reply_text(event, [
-                "Display name\n#{profile['displayName']}",
-                "Status message\n#{profile['statusMessage']}"
-              ])
-            else
-              reply_text(event, "Bot can't use profile API without user ID")
-            end
+            @hoge = true
+            reply_content(event, {
+              type: 'text',
+              text: '[QUICK REPLY]',
+              quickReply: {
+                items: [
+                  {
+                    type: "action",
+                    imageUrl: QUICK_REPLY_ICON_URL,
+                    action: {
+                      type: "message",
+                      label: "Sushi",
+                      text: "Sushi"
+                    }
+                  },
+                  {
+                    type: "action",
+                    action: {
+                      type: "location",
+                      label: "Send location"
+                    }
+                  },
+                  {
+                    type: "action",
+                    imageUrl: QUICK_REPLY_ICON_URL,
+                    action: {
+                      type: "camera",
+                      label: "Open camera",
+                    }
+                  },
+                  {
+                    type: "action",
+                    imageUrl: QUICK_REPLY_ICON_URL,
+                    action: {
+                      type: "cameraRoll",
+                      label: "Open cameraRoll",
+                    }
+                  },
+                  {
+                    type: "action",
+                    action: {
+                      type: "postback",
+                      label: "buy",
+                      data: "action=buy&itemid=111",
+                      text: "buy",
+                    }
+                  },
+                  {
+                    type: "action",
+                    action: {
+                      type: "message",
+                      label: "Yes",
+                      text: "Yes"
+                    }
+                  },
+                  {
+                    type: "action",
+                    action: {
+                      type: "datetimepicker",
+                      label: "Select date",
+                      data: "storeId=12345",
+                      mode: "datetime",
+                      initial: "2017-12-25t00:00",
+                      max: "2018-01-24t23:59",
+                      min: "2017-12-25t00:00"
+                    }
+                  },
+                ],
+              },
+            })
           elsif event.message['text'].eql?('アンケート')
             # private内のtemplateメソッドを呼び出します。
             client.reply_message(event['replyToken'], template)
+          elsif @hoge
+              puts 'にゃんぽこ'
+              client.reply_message(event['replyToken'], template)
+              @hoge = false
+            els
           end
         end
       when Line::Bot::Event::Follow #友達登録イベント
@@ -66,17 +139,17 @@ class LinebotController < ApplicationController
     )
   end
 
+  def reply_content(event, messages)
+    res = client.reply_message(
+      event['replyToken'],
+      messages
+    )
+    puts res.read_body if res.code != 200
+  end
+
   private
   def action
-    {
-      "type":"datetimepicker",
-      "label":"Select date",
-      "data":"storeId=12345",
-      "mode":"datetime",
-      "initial":"2017-12-25t00:00",
-      "max":"2018-01-24t23:59",
-      "min":"2017-12-25t00:00"
-   }
+
   end
 
   def template
