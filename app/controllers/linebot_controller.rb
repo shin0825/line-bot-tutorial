@@ -28,8 +28,16 @@ class LinebotController < ApplicationController
         when Line::Bot::Event::MessageType::Text
           # LINEから送られてきたメッセージが「アンケート」と一致するかチェック
           if sample.include?(event.message['text'])
-            client.reply_message(event['replyToken'], action)
-            puts event.message['text']
+            if event['source']['type'] == 'user'
+              profile = client.get_profile(event['source']['userId'])
+              profile = JSON.parse(profile.read_body)
+              reply_text(event, [
+                "Display name\n#{profile['displayName']}",
+                "Status message\n#{profile['statusMessage']}"
+              ])
+            else
+              reply_text(event, "Bot can't use profile API without user ID")
+            end
           elsif event.message['text'].eql?('アンケート')
             # private内のtemplateメソッドを呼び出します。
             client.reply_message(event['replyToken'], template)
@@ -50,12 +58,24 @@ class LinebotController < ApplicationController
     head :ok
   end
 
+  def reply_text(event, texts)
+    texts = [texts] if texts.is_a?(String)
+    client.reply_message(
+      event['replyToken'],
+      texts.map { |text| {type: 'text', text: text} }
+    )
+  end
+
   private
   def action
     {
-      "type":"text",
-      "label":"Yes",
-      "text":"Yes"
+      "type":"datetimepicker",
+      "label":"Select date",
+      "data":"storeId=12345",
+      "mode":"datetime",
+      "initial":"2017-12-25t00:00",
+      "max":"2018-01-24t23:59",
+      "min":"2017-12-25t00:00"
    }
   end
 
