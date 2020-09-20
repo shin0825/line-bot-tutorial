@@ -11,6 +11,7 @@ class LinebotController < ApplicationController
   end
 
   def callback
+    sample = ['食費','雑費','交遊費']
     body = request.body.read
 
     signature = request.env['HTTP_X_LINE_SIGNATURE']
@@ -26,11 +27,13 @@ class LinebotController < ApplicationController
         case event.type
         when Line::Bot::Event::MessageType::Text
           # LINEから送られてきたメッセージが「アンケート」と一致するかチェック
-          if event.message['text'].eql?('アンケート')
+          if sample.include?(event.message['text'])
+            client.reply_message(event['replyToken'], action)
+            puts event.message['text']
+          elsif event.message['text'].eql?('アンケート')
             # private内のtemplateメソッドを呼び出します。
             client.reply_message(event['replyToken'], template)
           end
-          puts event.message['text']
         end
       when Line::Bot::Event::Follow #友達登録イベント
         puts 'フォローきちゃ'
@@ -48,6 +51,13 @@ class LinebotController < ApplicationController
   end
 
   private
+  def action
+    {
+      "type":"text",
+      "label":"Yes",
+      "text":"Yes"
+   }
+  end
 
   def template
     {
