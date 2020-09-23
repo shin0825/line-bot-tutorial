@@ -120,6 +120,11 @@ class LinebotController < ApplicationController
         puts 'フォローきちゃ'
         userId = event['source']['userId']
         User.find_or_create_by(uid: userId)
+        message = {
+          type: 'text',
+          text: 'お試しプッシュ'
+        }
+        client.push_message(userId, message)
       when Line::Bot::Event::Unfollow #友達削除イベント
         puts 'まぢやみ'
         userId = event['source']['userId']
