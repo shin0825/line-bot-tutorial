@@ -9,3 +9,7 @@ https://github.com/line/line-bot-sdk-ruby
 https://qiita.com/uezo/items/12bb6bde9188eb993331
 
 https://qiita.com/4geru/items/0603c8f0d05e42aed3c6
+
+https://qiita.com/yuya_takeyama/items/0660a59d13e2cd0b2516
+
+ - herokuにデプロイした場合はfixieを利用してproxy経由でアクセス許可する。
